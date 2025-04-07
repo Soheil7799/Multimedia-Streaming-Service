@@ -39,19 +39,20 @@ async def configure_filters(video_id: str, config: Dict[str, Any]):
 @router.post("/{video_id}/apply")
 async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
     """
-    Apply configured filters to the video.
-    This must be possible if there is a previous video uploaded and filters have been configured.
+    Apply configured filters to the video or audio file.
+    This must be possible if there is a previous file uploaded and filters have been configured.
     """
     videos = get_videos()
     if video_id not in videos:
-        raise HTTPException(status_code=404, detail="Video not found")
+        raise HTTPException(status_code=404, detail="File not found")
     
     if not videos[video_id]["config"]:
         raise HTTPException(status_code=400, detail="No configuration saved. Configure filters first.")
     
     # Get the input and output paths
     input_file = videos[video_id]["path"]
-    processed_filename = f"processed_{os.path.basename(input_file)}"
+    original_filename = os.path.basename(input_file)
+    processed_filename = f"processed_{original_filename}"
     processed_path = os.path.join(settings.PROCESSED_DIR, processed_filename)
     
     # Get the configuration
@@ -60,10 +61,15 @@ async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
     
     # Process audio
     if audio_filters:
-        audio_filter_manager.process_video(input_file, processed_path, audio_filters)
+        try:
+            audio_filter_manager.process_video(input_file, processed_path, audio_filters)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error applying filters: {str(e)}"
+            )
     else:
-        # If no audio filters, just copy the file for now
-        import shutil
+        # If no audio filters, just copy the file
         shutil.copy2(input_file, processed_path)
     
     # Update video info
