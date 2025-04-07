@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Base API URL
-    const API_BASE_URL = '/api';
+    const API_BASE_URL = 'http://localhost:8000/api';
     
     // Handle file upload
     uploadForm.addEventListener('submit', function(e) {

@@ -10,7 +10,7 @@ router = APIRouter()
 # In-memory storage for simplicity (in a real app, this might be a database)
 videos = {}
 
-@router.post("/", status_code=201)
+@router.post("", status_code=201)
 async def upload_video(file: UploadFile = File(...)):
     """
     Upload a video file to the server.
@@ -20,7 +20,7 @@ async def upload_video(file: UploadFile = File(...)):
     if videos:
         return JSONResponse(
             status_code=400,
-            content={"message": "A video is already uploaded. Please delete it first."}
+            content={"message": "A file is already uploaded. Please delete it first."}
         )
     
     # Validate file format (basic validation)

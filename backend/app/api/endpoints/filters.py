@@ -1,11 +1,40 @@
 import os
-import subprocess
 from app.core.config import settings
 from app.api.endpoints.upload import get_videos
 from app.filters.audio.filter_manager import AudioFilterManager
+from fastapi import APIRouter, HTTPException, BackgroundTasks
+from typing import Dict, Any, List
+import shutil
 
-# Create an instance of the AudioFilterManager
+
+
+
+
+
+router = APIRouter()
 audio_filter_manager = AudioFilterManager()
+
+@router.post("/{video_id}/configure")
+async def configure_filters(video_id: str, config: Dict[str, Any]):
+    """
+    Configure audio and video filters for a previously uploaded video.
+    """
+    videos = get_videos()
+    if video_id not in videos:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Validate configuration (basic validation)
+    if "audio_filters" not in config or "video_filters" not in config:
+        raise HTTPException(
+            status_code=400, 
+            detail="Configuration must include both 'audio_filters' and 'video_filters'"
+        )
+    
+    # Here you would validate the specific filters and parameters
+    # For now, we'll just save the configuration
+    videos[video_id]["config"] = config
+    
+    return {"message": "Configuration saved successfully"}
 
 @router.post("/{video_id}/apply")
 async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
