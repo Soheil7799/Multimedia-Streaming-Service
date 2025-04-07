@@ -1,68 +1,132 @@
 body {
     font-family: Arial, sans-serif;
-    line-height: 1.6;
     margin: 0;
     padding: 20px;
-    background-color: #f4f4f4;
+    background-color: #f5f5f5;
+    color: #333;
 }
 
 .container {
     max-width: 800px;
     margin: 0 auto;
-    background: white;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-h1, h2, h3 {
-    color: #333;
-}
-
-.upload-section, .filter-section, .video-player {
+h1 {
+    text-align: center;
+    color: #2c3e50;
     margin-bottom: 30px;
-    padding: 15px;
-    border: 1px solid #ddd;
+}
+
+h2 {
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+
+.section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f9f9f9;
     border-radius: 5px;
 }
 
 .progress-bar {
     width: 100%;
-    background-color: #e0e0e0;
     height: 20px;
-    margin-top: 10px;
-    border-radius: 5px;
+    background-color: #ecf0f1;
+    border-radius: 10px;
+    margin-top: 15px;
     overflow: hidden;
 }
 
 .progress {
-    width: 0%;
     height: 100%;
-    background-color: #4caf50;
-    transition: width 0.3s;
+    background-color: #3498db;
+    width: 0%;
+    transition: width 0.3s ease;
 }
 
 button {
-    background-color: #4caf50;
+    background-color: #3498db;
     color: white;
     border: none;
     padding: 10px 15px;
-    margin: 10px 0;
+    border-radius: 5px;
     cursor: pointer;
-    border-radius: 3px;
+    font-size: 14px;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #2980b9;
 }
 
-select {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
+input[type="file"] {
+    margin-bottom: 15px;
 }
 
 video {
     width: 100%;
+    border-radius: 5px;
     background-color: #000;
+}
+
+.filter-group {
+    margin-bottom: 20px;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.filter-item {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.filter-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.filter-params {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ecf0f1;
+}
+
+.param-item {
+    margin-bottom: 10px;
+}
+
+.param-item label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.param-item input[type="range"] {
+    width: 100%;
+}
+
+.param-value {
+    font-size: 12px;
+    color: #7f8c8d;
+    text-align: right;
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
 }

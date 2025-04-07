@@ -10,10 +10,11 @@
     <div class="container">
         <h1>Multimedia Streaming Service</h1>
         
-        <div class="upload-section">
+        <!-- Upload Section -->
+        <div class="section upload-section">
             <h2>Upload Video</h2>
             <form id="upload-form">
-                <input type="file" id="video-file" accept="video/*">
+                <input type="file" id="video-file" accept="video/*,audio/*">
                 <button type="submit">Upload</button>
             </form>
             <div id="upload-progress" class="progress-bar">
@@ -21,37 +22,43 @@
             </div>
         </div>
         
-        <div class="filter-section" style="display: none;">
-            <h2>Configure Filters</h2>
-            <div class="filter-options">
-                <div class="audio-filters">
-                    <h3>Audio Filters</h3>
-                    <select id="audio-filter" multiple>
-                        <option value="gain_compression">Gain Compression</option>
-                        <option value="voice_enhancement">Voice Enhancement</option>
-                        <option value="denoise_delay">Denoise & Delay</option>
-                        <option value="phone">Phone Effect</option>
-                        <option value="car">Car Effect</option>
-                    </select>
-                </div>
-                <div class="video-filters">
-                    <h3>Video Filters</h3>
-                    <select id="video-filter" multiple>
-                        <option value="grayscale">Grayscale</option>
-                        <option value="invert">Color Invert</option>
-                        <option value="interpolation">Frame Interpolation</option>
-                        <option value="upscale">Upscaling</option>
-                    </select>
-                </div>
+        <!-- File Analysis Section (initially hidden) -->
+        <div class="section analysis-section" style="display: none;">
+            <h2>File Analysis</h2>
+            <div id="file-info">
+                <p><strong>Filename:</strong> <span id="filename"></span></p>
+                <p><strong>Duration:</strong> <span id="duration"></span> seconds</p>
+                <p><strong>Format:</strong> <span id="format"></span></p>
+                <p><strong>Streams:</strong></p>
+                <div id="streams"></div>
             </div>
-            <button id="save-config">Save Configuration</button>
-            <button id="apply-filters">Apply Filters</button>
         </div>
         
-        <div class="video-player" style="display: none;">
+        <!-- Filter Configuration Section (initially hidden) -->
+        <div class="section filter-section" style="display: none;">
+            <h2>Configure Filters</h2>
+            
+            <!-- Audio Filters -->
+            <div class="filter-group">
+                <h3>Audio Filters</h3>
+                <div id="audio-filters" class="filter-options"></div>
+            </div>
+            
+            <!-- Video Filters (to be implemented later) -->
+            <div class="filter-group">
+                <h3>Video Filters</h3>
+                <div id="video-filters" class="filter-options"></div>
+            </div>
+            
+            <div class="filter-actions">
+                <button id="apply-filters">Apply Filters</button>
+            </div>
+        </div>
+        
+        <!-- Video Player Section (initially hidden) -->
+        <div class="section player-section" style="display: none;">
             <h2>Video Player</h2>
             <video id="video-player" controls></video>
-            <button id="start-stream">Start Streaming</button>
         </div>
     </div>
     
