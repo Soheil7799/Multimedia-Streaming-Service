@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimedia Streaming Service</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Multimedia Streaming Service</h1>
+        
+        <div class="upload-section">
+            <h2>Upload Video</h2>
+            <form id="upload-form">
+                <input type="file" id="video-file" accept="video/*">
+                <button type="submit">Upload</button>
+            </form>
+            <div id="upload-progress" class="progress-bar">
+                <div class="progress"></div>
+            </div>
+        </div>
+        
+        <div class="filter-section" style="display: none;">
+            <h2>Configure Filters</h2>
+            <div class="filter-options">
+                <div class="audio-filters">
+                    <h3>Audio Filters</h3>
+                    <select id="audio-filter" multiple>
+                        <option value="gain_compression">Gain Compression</option>
+                        <option value="voice_enhancement">Voice Enhancement</option>
+                        <option value="denoise_delay">Denoise & Delay</option>
+                        <option value="phone">Phone Effect</option>
+                        <option value="car">Car Effect</option>
+                    </select>
+                </div>
+                <div class="video-filters">
+                    <h3>Video Filters</h3>
+                    <select id="video-filter" multiple>
+                        <option value="grayscale">Grayscale</option>
+                        <option value="invert">Color Invert</option>
+                        <option value="interpolation">Frame Interpolation</option>
+                        <option value="upscale">Upscaling</option>
+                    </select>
+                </div>
+            </div>
+            <button id="save-config">Save Configuration</button>
+            <button id="apply-filters">Apply Filters</button>
+        </div>
+        
+        <div class="video-player" style="display: none;">
+            <h2>Video Player</h2>
+            <video id="video-player" controls></video>
+            <button id="start-stream">Start Streaming</button>
+        </div>
+    </div>
+    
+    <script src="js/main.js"></script>
+</body>
+</html>
