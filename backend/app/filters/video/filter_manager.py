@@ -2,6 +2,7 @@ import os
 import subprocess
 import logging
 from typing import List, Dict, Any
+import tempfile
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -66,31 +67,34 @@ class VideoFilterManager:
         final_output = output_path
         
         try:
-            # Apply each filter sequentially
-            for i, filter_config in enumerate(filters_config):
-                filter_name = filter_config["name"]
-                params = filter_config.get("params", {})
+                # Create a dedicated temp directory for intermediate files
+            with tempfile.TemporaryDirectory() as temp_processing_dir:
+                logger.info(f"Created temporary directory for filter processing: {temp_processing_dir}")
                 
-                logger.info(f"Applying filter {i+1}/{len(filters_config)}: {filter_name}")
-                
-                if filter_name in self.filters:
-                    filter_func = self.filters[filter_name]
+                # Apply each filter sequentially
+                for i, filter_config in enumerate(filters_config):
+                    filter_name = filter_config["name"]
+                    params = filter_config.get("params", {})
                     
-                    # For the last filter, use the final output path
-                    if i == len(filters_config) - 1:
-                        current_output = final_output
-                    else:
-                        # Use a temporary file for intermediate steps
-                        temp_dir = os.path.dirname(output_path)
-                        current_output = os.path.join(temp_dir, f"temp_{i}_{os.path.basename(output_path)}")
+                    logger.info(f"Applying filter {i+1}/{len(filters_config)}: {filter_name}")
                     
-                    # Apply the filter
-                    logger.info(f"Processing from {temp_output} to {current_output}")
-                    filter_func(temp_output, current_output, params)
-                    
-                    # Update the temp output for the next filter
-                    if i < len(filters_config) - 1:
-                        temp_output = current_output
+                    if filter_name in self.filters:
+                        filter_func = self.filters[filter_name]
+                        
+                        # For the last filter, use the final output path
+                        if i == len(filters_config) - 1:
+                            current_output = final_output
+                        else:
+                            # Use a temporary file for intermediate steps, always in the temp directory
+                            current_output = os.path.join(temp_processing_dir, f"temp_{i}_{os.path.basename(output_path)}")
+                        
+                        # Apply the filter
+                        logger.info(f"Processing from {temp_output} to {current_output}")
+                        filter_func(temp_output, current_output, params)
+                        
+                        # Update the temp output for the next filter
+                        if i < len(filters_config) - 1:
+                            temp_output = current_output
                 else:
                     logger.warning(f"Filter {filter_name} not found, skipping")
             

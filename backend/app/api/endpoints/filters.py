@@ -77,16 +77,19 @@ async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
         # Create a temporary directory for intermediate processing
         with tempfile.TemporaryDirectory() as temp_dir:
             logger.info(f"Created temporary directory: {temp_dir}")
-            temp_video_path = os.path.join(temp_dir, "temp_video.mp4")
+            
+            # Define paths for intermediate files
+            temp_audio_processed = os.path.join(temp_dir, "audio_processed.mp4")
+            temp_video_path = os.path.join(temp_dir, "final_temp.mp4")
             
             # Process audio if audio filters are specified
             if audio_filters:
                 logger.info(f"Applying {len(audio_filters)} audio filters")
                 try:
                     # Process the video with audio filters and save to temporary path
-                    audio_filter_manager.process_video(input_file, temp_video_path, audio_filters)
+                    audio_filter_manager.process_video(input_file, temp_audio_processed, audio_filters)
                     # Update input for video processing
-                    current_input = temp_video_path
+                    current_input = temp_audio_processed
                     logger.info("Audio filters applied successfully")
                 except Exception as e:
                     logger.error(f"Error applying audio filters: {str(e)}")
@@ -101,8 +104,10 @@ async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
             if video_filters:
                 logger.info(f"Applying {len(video_filters)} video filters")
                 try:
-                    # Process the video with video filters and save to final path
-                    video_filter_manager.process_video(current_input, processed_path, video_filters)
+                    # Process the video with video filters and save to temporary final path
+                    video_filter_manager.process_video(current_input, temp_video_path, video_filters)
+                    # Copy the result to the final destination
+                    shutil.copy2(temp_video_path, processed_path)
                     logger.info("Video filters applied successfully")
                 except Exception as e:
                     logger.error(f"Error applying video filters: {str(e)}")
@@ -119,7 +124,9 @@ async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
                     logger.info("No filters applied, copying original file to output")
                     # No filters applied at all, just copy the original
                     shutil.copy2(input_file, processed_path)
-        
+                    
+            # Ensure all temporary files are removed
+            logger.info("Cleaning up temporary files")
         # Update video info
         videos[video_id]["processed"] = True
         videos[video_id]["processed_path"] = processed_path
