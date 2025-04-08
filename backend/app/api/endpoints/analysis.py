@@ -109,7 +109,33 @@ async def analyze_file(video_id: str):
                 "params": []  # No adjustable parameters
             }
         ],
-        "video": []  # We'll add video filters later
+        "video": [
+            {
+                "name": "grayscale",
+                "display_name": "Grayscale",
+                "params": []  # No adjustable parameters
+            },
+            {
+                "name": "color_invert",
+                "display_name": "Color Invert",
+                "params": []  # No adjustable parameters
+            },
+            {
+                "name": "frame_interpolation",
+                "display_name": "Frame Interpolation",
+                "params": [
+                    {"name": "target_fps", "type": "range", "min": 30, "max": 120, "default": 60, "step": 10}
+                ]
+            },
+            {
+                "name": "upscaling",
+                "display_name": "Upscaling",
+                "params": [
+                    {"name": "width", "type": "number", "min": 640, "max": 3840, "default": 1920, "step": 1},
+                    {"name": "height", "type": "number", "min": 480, "max": 2160, "default": 1080, "step": 1}
+                ]
+            }
+        ]
     }
     
     return file_info
