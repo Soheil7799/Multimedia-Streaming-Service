@@ -133,9 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
             video_filters: []
         };
         
-        // Add audio filters
-        if (metadata.available_filters && metadata.available_filters.audio) {
-            metadata.available_filters.audio.forEach(filter => {
+        // Function to create filter UI elements
+        function createFilterElements(filters, container, filterType) {
+            filters.forEach(filter => {
                 const filterItem = document.createElement('div');
                 filterItem.classList.add('filter-item');
                 
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.id = `filter-${filter.name}`;
-                checkbox.dataset.filterType = 'audio';
+                checkbox.dataset.filterType = filterType;
                 checkbox.dataset.filterName = filter.name;
                 
                 const label = document.createElement('label');
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Update value display on input change
                         paramInput.addEventListener('input', function() {
                             paramValue.textContent = this.value;
-                            updateFilterParams(filter.name, param.name, this.value);
+                            updateFilterParams(filter.name, param.name, this.value, filterType);
                         });
                         
                         paramItem.appendChild(paramLabel);
@@ -209,22 +209,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
                 
-                audioFiltersContainer.appendChild(filterItem);
+                container.appendChild(filterItem);
             });
         }
         
-        // Video filters will be added later
+        // Add audio filters
+        if (metadata.available_filters && metadata.available_filters.audio) {
+            createFilterElements(metadata.available_filters.audio, audioFiltersContainer, 'audio');
+        }
+        
+        // Add video filters
+        if (metadata.available_filters && metadata.available_filters.video) {
+            createFilterElements(metadata.available_filters.video, videoFiltersContainer, 'video');
+        }
     }
     
     // Update filter parameters when changed
-    function updateFilterParams(filterName, paramName, value) {
+    function updateFilterParams(filterName, paramName, value, filterType) {
         // Find the filter in selected filters
-        const filterType = `audio_filters`;
-        const filterIndex = selectedFilters[filterType].findIndex(f => f.name === filterName);
+        const filterTypeKey = `${filterType}_filters`;
+        const filterIndex = selectedFilters[filterTypeKey].findIndex(f => f.name === filterName);
         
         if (filterIndex !== -1) {
             // Update parameter value
-            selectedFilters[filterType][filterIndex].params[paramName] = parseFloat(value);
+            selectedFilters[filterTypeKey][filterIndex].params[paramName] = parseFloat(value);
         }
     }
     
@@ -284,6 +292,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Configuration saved:', data);
             
+            // Show loading indicator
+            applyFiltersBtn.textContent = 'Processing...';
+            applyFiltersBtn.disabled = true;
+            
             // Apply the filters
             return fetch(`${API_BASE_URL}/filters/${currentVideoId}/apply`, {
                 method: 'POST'
@@ -298,6 +310,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Filters applied:', data);
             
+            // Reset button state
+            applyFiltersBtn.textContent = 'Apply Filters';
+            applyFiltersBtn.disabled = false;
+            
             // Show video player
             playerSection.style.display = 'block';
             
@@ -308,6 +324,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             alert(`Error: ${error.message}`);
+            
+            // Reset button state
+            applyFiltersBtn.textContent = 'Apply Filters';
+            applyFiltersBtn.disabled = false;
         });
     });
 });
