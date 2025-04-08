@@ -93,42 +93,67 @@ def merge_audio_with_video(input_path, audio_path, output_path):
     - audio_path: Path to the processed audio file
     - output_path: Path to save the merged result
     """
+    import subprocess
+    import os
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
     # Check if input is an audio-only file by extension
     audio_extensions = ['.mp3', '.wav', '.aac', '.ogg', '.flac', '.m4a']
     is_audio_only = any(input_path.lower().endswith(ext) for ext in audio_extensions)
     
-    logger.info(f"Input file: {input_path}, audio only: {is_audio_only}")
+    # Get output extension
+    output_ext = os.path.splitext(output_path)[1].lower()
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
-    # Extension for output file
-    output_ext = os.path.splitext(output_path)[1].lower()
-    
     try:
         if is_audio_only:
-            # For audio-only files, we just need to copy the processed audio
-            # to the output with appropriate codec
-            if output_ext in ['.mp3', '.m4a', '.aac']:
+            # For MP3 output specifically
+            if output_ext == '.mp3':
                 cmd = [
                     "ffmpeg",
-                    "-i", audio_path,  # Input processed audio
-                    "-c:a", "aac",     # Use AAC codec for audio
-                    "-b:a", "192k",    # Bitrate
-                    "-strict", "experimental",
-                    "-y",              # Overwrite output file
+                    "-i", audio_path,
+                    "-c:a", "libmp3lame",  # Use MP3 encoder
+                    "-q:a", "2",           # Quality setting (0-9, 0=best, 9=worst)
+                    "-y",                  # Overwrite output file
                     output_path
                 ]
+            # For AAC output
+            elif output_ext in ['.m4a', '.aac']:
+                cmd = [
+                    "ffmpeg",
+                    "-i", audio_path,
+                    "-c:a", "aac",
+                    "-b:a", "192k",
+                    "-y",
+                    output_path
+                ]
+            # For WAV output
+            elif output_ext == '.wav':
+                cmd = [
+                    "ffmpeg",
+                    "-i", audio_path,
+                    "-c:a", "pcm_s16le",
+                    "-y",
+                    output_path
+                ]
+            # Default to MP3 if extension not recognized but use different name
             else:
-                # Default to MP3 if extension not recognized
+                new_output_path = os.path.splitext(output_path)[0] + ".mp3"
+                logger.warning(f"Unknown output extension: {output_ext}, using MP3 instead. Output will be saved to {new_output_path}")
                 cmd = [
                     "ffmpeg",
-                    "-i", audio_path,  # Input processed audio
-                    "-c:a", "libmp3lame",  # Use MP3 codec
-                    "-q:a", "2",       # Quality
-                    "-y",              # Overwrite output file
-                    output_path
+                    "-i", audio_path,
+                    "-c:a", "libmp3lame",
+                    "-q:a", "2",
+                    "-y",
+                    new_output_path
                 ]
+                # Update the output_path for later reference
+                output_path = new_output_path
         else:
             # For video files, check if the video contains a video stream
             probe_cmd = [
@@ -143,8 +168,6 @@ def merge_audio_with_video(input_path, audio_path, output_path):
             probe_result = subprocess.run(probe_cmd, capture_output=True, text=True)
             has_video_stream = "video" in probe_result.stdout.strip()
             
-            logger.info(f"Input file has video stream: {has_video_stream}")
-            
             if has_video_stream:
                 # If the file has a video stream, merge it with the processed audio
                 cmd = [
@@ -153,7 +176,6 @@ def merge_audio_with_video(input_path, audio_path, output_path):
                     "-i", audio_path,  # Input processed audio
                     "-c:v", "copy",    # Copy video without re-encoding
                     "-c:a", "aac",     # Use AAC codec for audio
-                    "-strict", "experimental",
                     "-map", "0:v:0",   # Use first video stream from first input
                     "-map", "1:a:0",   # Use first audio stream from second input
                     "-shortest",       # Finish encoding when the shortest input stream ends
@@ -162,14 +184,25 @@ def merge_audio_with_video(input_path, audio_path, output_path):
                 ]
             else:
                 # If the file doesn't have a video stream, treat it as audio-only
-                cmd = [
-                    "ffmpeg",
-                    "-i", audio_path,  # Input processed audio
-                    "-c:a", "aac",     # Use AAC codec for audio
-                    "-strict", "experimental",
-                    "-y",              # Overwrite output file
-                    output_path
-                ]
+                # and repeat the audio-only logic
+                if output_ext == '.mp3':
+                    cmd = [
+                        "ffmpeg",
+                        "-i", audio_path,
+                        "-c:a", "libmp3lame",
+                        "-q:a", "2",
+                        "-y",
+                        output_path
+                    ]
+                else:
+                    cmd = [
+                        "ffmpeg",
+                        "-i", audio_path,
+                        "-c:a", "aac",
+                        "-b:a", "192k",
+                        "-y",
+                        output_path
+                    ]
         
         logger.info(f"Executing FFmpeg command: {' '.join(cmd)}")
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -178,6 +211,7 @@ def merge_audio_with_video(input_path, audio_path, output_path):
             logger.info(f"FFmpeg output: {result.stderr}")
             
         logger.info(f"Successfully created output file: {output_path}")
+        return output_path
     except subprocess.CalledProcessError as e:
         logger.error(f"FFmpeg error: {e}")
         logger.error(f"FFmpeg stderr: {e.stderr}")

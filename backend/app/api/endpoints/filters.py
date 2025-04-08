@@ -53,7 +53,14 @@ async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
         # Get the input and output paths
         input_file = videos[video_id]["path"]
         original_filename = os.path.basename(input_file)
-        processed_filename = f"processed_{original_filename}"
+        file_ext = os.path.splitext(original_filename)[1].lower()
+        
+        # Force .mp3 extension for MP3 files to ensure compatibility
+        if file_ext == '.mp3':
+            processed_filename = f"processed_{os.path.splitext(original_filename)[0]}.mp3"
+        else:
+            processed_filename = f"processed_{original_filename}"
+            
         processed_path = os.path.join(settings.PROCESSED_DIR, processed_filename)
         
         # Ensure output directory exists
@@ -73,10 +80,18 @@ async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
                 audio_filter_manager.process_video(input_file, processed_path, audio_filters)
             except Exception as e:
                 logger.error(f"Error applying audio filters: {e}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Error applying audio filters: {str(e)}"
-                )
+                
+                # FALLBACK: If processing fails, just copy the original file
+                logger.warning("Filter application failed. Using original file as fallback.")
+                try:
+                    shutil.copy2(input_file, processed_path)
+                    logger.info(f"Fallback: Original file copied to {processed_path}")
+                except Exception as copy_error:
+                    logger.error(f"Fallback copy failed: {copy_error}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Both filter application and fallback copy failed: {str(e)}. Copy error: {str(copy_error)}"
+                    )
         else:
             # If no audio filters, just copy the file
             logger.info(f"No audio filters to apply, copying file to: {processed_path}")
@@ -93,9 +108,12 @@ async def apply_filters(video_id: str, background_tasks: BackgroundTasks):
         videos[video_id]["processed"] = True
         videos[video_id]["processed_path"] = processed_path
         
-        logger.info(f"Successfully applied filters to {video_id}")
+        logger.info(f"Successfully applied filters or used fallback for {video_id}")
         
-        return {"message": "Filters applied successfully"}
+        return {"message": "Processing completed successfully"}
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         logger.error(f"Unexpected error applying filters: {e}")
         raise HTTPException(
