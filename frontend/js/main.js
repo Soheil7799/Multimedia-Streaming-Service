@@ -275,6 +275,24 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Show loading indicator
+        applyFiltersBtn.textContent = 'Processing...';
+        applyFiltersBtn.disabled = true;
+        
+        // Add a processing message to the UI
+        const processingMessage = document.createElement('div');
+        processingMessage.id = 'processing-message';
+        processingMessage.className = 'processing-message';
+        processingMessage.innerHTML = '<p>Processing your video...</p><p>This may take a while depending on the filters selected.</p>';
+        filterSection.appendChild(processingMessage);
+        
+        // Create a timeout to check for long-running processes
+        const processingTimeout = setTimeout(() => {
+            const timeoutMessage = document.createElement('p');
+            timeoutMessage.textContent = 'Still processing... This might take longer for complex filters or large files.';
+            processingMessage.appendChild(timeoutMessage);
+        }, 10000); // Show additional message after 10 seconds
+        
         // First, save the configuration
         fetch(`${API_BASE_URL}/filters/${currentVideoId}/configure`, {
             method: 'POST',
@@ -285,16 +303,14 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Failed to save configuration');
+                return response.json().then(err => {
+                    throw new Error(err.detail || 'Failed to save configuration');
+                });
             }
             return response.json();
         })
         .then(data => {
             console.log('Configuration saved:', data);
-            
-            // Show loading indicator
-            applyFiltersBtn.textContent = 'Processing...';
-            applyFiltersBtn.disabled = true;
             
             // Apply the filters
             return fetch(`${API_BASE_URL}/filters/${currentVideoId}/apply`, {
@@ -303,16 +319,27 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Failed to apply filters');
+                return response.json().then(err => {
+                    throw new Error(err.detail || 'Failed to apply filters');
+                });
             }
             return response.json();
         })
         .then(data => {
             console.log('Filters applied:', data);
             
+            // Clear the timeout
+            clearTimeout(processingTimeout);
+            
             // Reset button state
             applyFiltersBtn.textContent = 'Apply Filters';
             applyFiltersBtn.disabled = false;
+            
+            // Remove processing message
+            const existingMessage = document.getElementById('processing-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
             
             // Show video player
             playerSection.style.display = 'block';
@@ -323,11 +350,110 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert(`Error: ${error.message}`);
+            
+            // Clear the timeout
+            clearTimeout(processingTimeout);
             
             // Reset button state
             applyFiltersBtn.textContent = 'Apply Filters';
             applyFiltersBtn.disabled = false;
+            
+            // Change processing message to error message
+            const existingMessage = document.getElementById('processing-message');
+            if (existingMessage) {
+                existingMessage.innerHTML = `<p class="error">Error: ${error.message}</p>
+                <p>There was a problem applying the filters. You can:</p>
+                <ul>
+                    <li>Try again with fewer or different filters</li>
+                    <li>Check if your video format is supported</li>
+                    <li>Try a shorter or smaller video file</li>
+                </ul>`;
+                existingMessage.className = 'error-message';
+            } else {
+                alert(`Error: ${error.message}`);
+            }
         });
     });
+    // Update selected filters when checkboxes change
+    function updateSelectedFilters(checkbox, filter) {
+        const filterType = `${checkbox.dataset.filterType}_filters`;
+        const filterName = checkbox.dataset.filterName;
+        
+        if (checkbox.checked) {
+            // Check for potentially resource-intensive combinations
+            if (filterName === 'frame_interpolation' && isFilterSelected('upscaling', 'video')) {
+                if (!confirm('Combining Frame Interpolation with Upscaling might require significant processing time. Do you want to continue?')) {
+                    checkbox.checked = false;
+                    return;
+                }
+            }
+            
+            // Add filter to selected filters
+            const filterParams = {};
+            
+            // Initialize parameters with default values
+            if (filter.params) {
+                filter.params.forEach(param => {
+                    const inputElement = document.getElementById(`param-${filterName}-${param.name}`);
+                    filterParams[param.name] = parseFloat(inputElement.value);
+                });
+            }
+            
+            selectedFilters[filterType].push({
+                name: filterName,
+                params: filterParams
+            });
+            
+            // Update UI to reflect active filters
+            updateActiveFilterStyles();
+        } else {
+            // Remove filter from selected filters
+            const filterIndex = selectedFilters[filterType].findIndex(f => f.name === filterName);
+            if (filterIndex !== -1) {
+                selectedFilters[filterType].splice(filterIndex, 1);
+            }
+            
+            // Update UI to reflect active filters
+            updateActiveFilterStyles();
+        }
+        
+        console.log('Selected filters:', selectedFilters);
+        
+        // Update Apply Filters button state
+        updateApplyButtonState();
+    }
+    
+    // Check if a specific filter is selected
+    function isFilterSelected(filterName, filterType) {
+        const filterTypeKey = `${filterType}_filters`;
+        return selectedFilters[filterTypeKey].some(f => f.name === filterName);
+    }
+    
+    // Update UI to reflect active filters
+    function updateActiveFilterStyles() {
+        // Reset all filter items
+        document.querySelectorAll('.filter-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Add active class to selected filters
+        document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            const filterItem = checkbox.closest('.filter-item');
+            if (filterItem) {
+                filterItem.classList.add('active');
+            }
+        });
+    }
+    
+    // Update Apply button state based on selected filters
+    function updateApplyButtonState() {
+        const hasFilters = selectedFilters.audio_filters.length > 0 || selectedFilters.video_filters.length > 0;
+        applyFiltersBtn.disabled = !hasFilters;
+        
+        if (hasFilters) {
+            applyFiltersBtn.classList.add('ready');
+        } else {
+            applyFiltersBtn.classList.remove('ready');
+        }
+    }
 });

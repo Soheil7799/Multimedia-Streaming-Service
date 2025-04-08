@@ -59,13 +59,58 @@ button {
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.3s;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
 }
 
 button:hover {
     background-color: #2980b9;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
+button.ready {
+    background-color: #2ecc71;
+}
+
+button.ready:hover {
+    background-color: #27ae60;
+}
+
+/* Button ripple effect */
+button:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+}
+
+button:not(:disabled):active:after {
+    animation: ripple 0.5s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(100, 100);
+        opacity: 0;
+    }
+}
 input[type="file"] {
     margin-bottom: 15px;
 }
@@ -91,8 +136,14 @@ video {
     padding: 15px;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
 }
-
+.filter-item.active {
+    background-color: #f0f8ff;
+    border-left: 4px solid #3498db;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
 .filter-header {
     display: flex;
     align-items: center;
@@ -129,4 +180,40 @@ video {
     display: flex;
     justify-content: center;
     margin-top: 20px;
+}
+
+.processing-message {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f0f8ff;
+    border-radius: 5px;
+    border-left: 4px solid #3498db;
+    text-align: center;
+    animation: pulse 2s infinite;
+}
+
+.error-message {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #fff0f0;
+    border-radius: 5px;
+    border-left: 4px solid #e74c3c;
+    text-align: left;
+}
+
+.error-message p.error {
+    color: #e74c3c;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.error-message ul {
+    text-align: left;
+    margin-left: 20px;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(52, 152, 219, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
 }
